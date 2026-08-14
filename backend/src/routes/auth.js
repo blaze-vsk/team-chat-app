@@ -4,32 +4,30 @@ const AuthService = require('../services/authService');
 const { registerValidator, loginValidator } = require('../middleware/validation');
 const logger = require('../utils/logger');
 
-// Register
+const sendError = (res, event, error, fallbackStatus) => {
+  logger.error(event, { message: error.message });
+  return res.status(error.status || fallbackStatus).json({ error: error.message });
+};
+
 router.post('/register', registerValidator, async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-    const result = await AuthService.registerUser(username, email, password);
+    const result = await AuthService.registerUser(req.body.username, req.body.email, req.body.password);
     res.status(201).json(result);
   } catch (error) {
-    logger.error('Register error:', error.message);
-    res.status(400).json({ error: error.message });
+    sendError(res, 'Register error', error, 400);
   }
 });
 
-// Login
 router.post('/login', loginValidator, async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await AuthService.loginUser(email, password);
+    const result = await AuthService.loginUser(req.body.email, req.body.password);
     res.json(result);
   } catch (error) {
-    logger.error('Login error:', error.message);
-    res.status(401).json({ error: error.message });
+    sendError(res, 'Login error', error, 401);
   }
 });
 
-// Logout
-router.post('/logout', (req, res) => {
+router.post('/logout', (_req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 

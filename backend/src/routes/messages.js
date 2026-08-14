@@ -2,45 +2,43 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const MessageService = require('../services/messageService');
-const { sendMessageValidator } = require('../middleware/validation');
+const { editMessageValidator } = require('../middleware/validation');
 const logger = require('../utils/logger');
 
-// Get messages in a team
-router.get('/team/:teamId', authMiddleware, async (req, res) => {
+router.use(authMiddleware);
+
+const sendError = (res, error) => {
+  logger.error('Message request failed', { message: error.message });
+  return res.status(error.status || 400).json({ error: error.message });
+};
+
+router.get('/team/:teamId', async (req, res) => {
   try {
-    const { limit = 50, offset = 0 } = req.query;
-    const messages = await MessageService.getMessages(
-      req.params.teamId,
-      parseInt(limit),
-      parseInt(offset)
-    );
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const requestedOffset = Number.parseInt(req.query.offset, 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 50;
+    const offset = Number.isFinite(requestedOffset) ? Math.max(requestedOffset, 0) : 0;
+    const messages = await MessageService.getMessages(req.params.teamId, req.user.id, limit, offset);
     res.json(messages);
   } catch (error) {
-    logger.error('Get messages error:', error.message);
-    res.status(400).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
-// Edit message
-router.put('/:messageId', authMiddleware, async (req, res) => {
+router.put('/:messageId', editMessageValidator, async (req, res) => {
   try {
-    const { content } = req.body;
-    const message = await MessageService.editMessage(req.params.messageId, content);
+    const message = await MessageService.editMessage(req.params.messageId, req.user.id, req.body.content.trim());
     res.json(message);
   } catch (error) {
-    logger.error('Edit message error:', error.message);
-    res.status(400).json({ error: error.message });
+    sendError(res, error);
   }
 });
 
-// Delete message
-router.delete('/:messageId', authMiddleware, async (req, res) => {
+router.delete('/:messageId', async (req, res) => {
   try {
-    await MessageService.deleteMessage(req.params.messageId);
-    res.json({ message: 'Message deleted' });
+    res.json(await MessageService.deleteMessage(req.params.messageId, req.user.id));
   } catch (error) {
-    logger.error('Delete message error:', error.message);
-    res.status(400).json({ error: error.message });
+    sendError(res, error);
   }
 });
 

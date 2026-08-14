@@ -2,6 +2,8 @@ const { query } = require('../config/database');
 
 const initDatabase = async () => {
   try {
+    await query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+
     // Create users table
     await query(`
       CREATE TABLE IF NOT EXISTS users (

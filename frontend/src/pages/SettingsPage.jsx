@@ -1,40 +1,38 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 function SettingsPage() {
-  const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const [username, setUsername] = useState(user?.username || '')
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  const { user, logout, updateProfile } = useAuthStore();
+  const [username, setUsername] = useState(user?.username || '');
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   const handleSave = async () => {
-    setLoading(true)
-    // TODO: Implement profile update API call
-    setLoading(false)
-  }
+    setLoading(true);
+    setFeedback('');
+    const result = await updateProfile({ username });
+    setLoading(false);
+    setFeedback(result.success ? 'Profile updated.' : result.error);
+  };
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-blue-500 hover:text-blue-700"
-          >
+          <button onClick={() => navigate('/dashboard')} className="text-blue-500 hover:text-blue-700">
             ← Back
           </button>
         </div>
       </div>
 
-      {/* Settings Container */}
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Profile Settings</h2>
@@ -43,7 +41,7 @@ function SettingsPage() {
             <label className="block text-gray-700 font-bold mb-2">Email</label>
             <input
               type="email"
-              value={user?.email}
+              value={user?.email || ''}
               disabled
               className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600"
             />
@@ -55,10 +53,18 @@ function SettingsPage() {
             <input
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(event) => setUsername(event.target.value)}
+              minLength="3"
+              maxLength="50"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {feedback && (
+            <p className={feedback === 'Profile updated.' ? 'text-green-700 mb-4' : 'text-red-700 mb-4'}>
+              {feedback}
+            </p>
+          )}
 
           <button
             onClick={handleSave}
@@ -80,7 +86,7 @@ function SettingsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default SettingsPage
+export default SettingsPage;

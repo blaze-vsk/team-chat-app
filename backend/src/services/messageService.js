@@ -1,80 +1,64 @@
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
+const TeamService = require('./teamService');
+
+const notFound = (message) => {
+  const error = new Error(message);
+  error.status = 404;
+  return error;
+};
 
 class MessageService {
   static async saveMessage(teamId, senderId, content, type = 'text') {
-    try {
-      const result = await query(
-        `INSERT INTO messages (team_id, sender_id, content, message_type)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *`,
-        [teamId, senderId, content, type]
-      );
+    await TeamService.assertMember(teamId, senderId);
+    const result = await query(
+      `INSERT INTO messages (team_id, sender_id, content, message_type)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [teamId, senderId, content, type]
+    );
 
-      const message = result.rows[0];
+    const message = result.rows[0];
+    const sender = await query('SELECT id, username, avatar_url FROM users WHERE id = $1', [senderId]);
+    message.sender = sender.rows[0];
 
-      // Get sender info
-      const senderResult = await query(
-        'SELECT id, username, avatar_url FROM users WHERE id = $1',
-        [senderId]
-      );
-
-      message.sender = senderResult.rows[0];
-
-      logger.info(`Message saved in team ${teamId} by user ${senderId}`);
-      return message;
-    } catch (error) {
-      logger.error('Save message error:', error.message);
-      throw error;
-    }
+    logger.info('Message saved', { teamId, senderId, messageId: message.id });
+    return message;
   }
 
-  static async getMessages(teamId, limit = 50, offset = 0) {
-    try {
-      const result = await query(
-        `SELECT m.*, u.username, u.avatar_url
-         FROM messages m
-         INNER JOIN users u ON m.sender_id = u.id
-         WHERE m.team_id = $1
-         ORDER BY m.created_at DESC
-         LIMIT $2 OFFSET $3`,
-        [teamId, limit, offset]
-      );
-
-      return result.rows.reverse();
-    } catch (error) {
-      logger.error('Get messages error:', error.message);
-      throw error;
-    }
+  static async getMessages(teamId, userId, limit = 50, offset = 0) {
+    await TeamService.assertMember(teamId, userId);
+    const result = await query(
+      `SELECT m.*, u.username, u.avatar_url
+       FROM messages m
+       INNER JOIN users u ON m.sender_id = u.id
+       WHERE m.team_id = $1
+       ORDER BY m.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [teamId, limit, offset]
+    );
+    return result.rows.reverse();
   }
 
-  static async editMessage(messageId, content) {
-    try {
-      const result = await query(
-        `UPDATE messages
-         SET content = $1, is_edited = true, edited_at = CURRENT_TIMESTAMP
-         WHERE id = $2
-         RETURNING *`,
-        [content, messageId]
-      );
-
-      logger.info(`Message ${messageId} edited`);
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Edit message error:', error.message);
-      throw error;
-    }
+  static async editMessage(messageId, userId, content) {
+    const result = await query(
+      `UPDATE messages
+       SET content = $1, is_edited = true, edited_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND sender_id = $3
+       RETURNING *`,
+      [content, messageId, userId]
+    );
+    if (!result.rows[0]) throw notFound('Message not found or you do not have permission to edit it');
+    return result.rows[0];
   }
 
-  static async deleteMessage(messageId) {
-    try {
-      await query('DELETE FROM messages WHERE id = $1', [messageId]);
-      logger.info(`Message ${messageId} deleted`);
-      return { success: true };
-    } catch (error) {
-      logger.error('Delete message error:', error.message);
-      throw error;
-    }
+  static async deleteMessage(messageId, userId) {
+    const result = await query(
+      'DELETE FROM messages WHERE id = $1 AND sender_id = $2 RETURNING id',
+      [messageId, userId]
+    );
+    if (!result.rows[0]) throw notFound('Message not found or you do not have permission to delete it');
+    return { success: true };
   }
 }
 

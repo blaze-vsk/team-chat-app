@@ -42,10 +42,14 @@ class MessageService {
 
   static async editMessage(messageId, userId, content) {
     const result = await query(
-      `UPDATE messages
+      `UPDATE messages AS m
        SET content = $1, is_edited = true, edited_at = CURRENT_TIMESTAMP
-       WHERE id = $2 AND sender_id = $3
-       RETURNING *`,
+       FROM team_members AS tm
+       WHERE m.id = $2
+         AND m.sender_id = $3
+         AND tm.team_id = m.team_id
+         AND tm.user_id = $3
+       RETURNING m.*`,
       [content, messageId, userId]
     );
     if (!result.rows[0]) throw notFound('Message not found or you do not have permission to edit it');
@@ -54,7 +58,13 @@ class MessageService {
 
   static async deleteMessage(messageId, userId) {
     const result = await query(
-      'DELETE FROM messages WHERE id = $1 AND sender_id = $2 RETURNING id',
+      `DELETE FROM messages AS m
+       USING team_members AS tm
+       WHERE m.id = $1
+         AND m.sender_id = $2
+         AND tm.team_id = m.team_id
+         AND tm.user_id = $2
+       RETURNING m.id`,
       [messageId, userId]
     );
     if (!result.rows[0]) throw notFound('Message not found or you do not have permission to delete it');

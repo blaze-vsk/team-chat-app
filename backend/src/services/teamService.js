@@ -57,7 +57,7 @@ class TeamService {
     }
 
     const members = await query(
-      `SELECT u.id, u.username, u.email, u.avatar_url, u.status, tm.role, tm.joined_at
+      `SELECT u.id, u.username, u.avatar_url, u.status, tm.role, tm.joined_at
        FROM team_members tm
        INNER JOIN users u ON u.id = tm.user_id
        WHERE tm.team_id = $1

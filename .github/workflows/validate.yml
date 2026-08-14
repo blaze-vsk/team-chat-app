@@ -1,0 +1,24 @@
+name: Validate application
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check backend syntax
+        run: |
+          node --check backend/src/server.js
+          node --check backend/src/services/socketService.js
+          node --check backend/src/services/messageService.js
+      - name: Install frontend dependencies
+        run: npm --prefix frontend install
+      - name: Build frontend
+        run: npm --prefix frontend run build

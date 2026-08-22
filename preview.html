@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Chat App - Standalone Preview</title>
+  
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.5);
+    }
+  </style>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f7ff',
+              100: '#ebf0ff',
+              200: '#d6e0ff',
+              300: '#adc2ff',
+              400: '#7599ff',
+              500: '#476eff',
+              600: '#2e49ff',
+              700: '#2334ff',
+              800: '#1d2ae0',
+              900: '#1c27b0'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+
+  <div id="root" class="h-full"></div>
+
+  <!-- Inline React Component using Babel -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // SVG Icons
+    const Icons = {
+      Sun: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+        </svg>
+      ),
+      Moon: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+        </svg>
+      ),
+      Hash: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" />
+        </svg>
+      ),
+      Settings: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.43l1.004-.827c.292-.24.437-.613.43-.991a6.936 6.936 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+      ),
+      LogOut: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+        </svg>
+      ),
+      Send: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+        </svg>
+      ),
+      Plus: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-7.5" />
+        </svg>
+      ),
+      Search: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.604 10.604Z" />
+        </svg>
+      ),
+      User: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+      ),
+      Users: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94-3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+      ),
+      ChevronRight: () => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" class="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
+      )
+    };
+
+    // Initial Mock Data
+    const INITIAL_TEAMS = [
+      { id: '1', name: 'General Chat', description: 'Company-wide updates and announcements', membersCount: 12 },
+      { id: '2', name: 'Engineering', description: 'Tech discussions, releases, and architecture', membersCount: 6 },
+      { id: '3', name: 'Design Studio', description: 'UI/UX mockups, feedback and guidelines', membersCount: 4 }
+    ];
+
+    const INITIAL_MESSAGES = {
+      '1': [
+        { id: 'm1', senderName: 'Sarah Connor', content: 'Welcome to the team chat! Let me know if you need anything.', timestamp: '10:32 AM', isMe: false },
+        { id: 'm2', senderName: 'John Miller', content: 'Hey everyone! Glad to join.', timestamp: '10:45 AM', isMe: false }
+      ],
+      '2': [
+        { id: 'm3', senderName: 'Alex River', content: 'We are pushing the database migrations today at 4 PM.', timestamp: '11:15 AM', isMe: false }
+      ],
+      '3': [
+        { id: 'm4', senderName: 'Elena Rostova', content: 'Check out the new design mockup for the chat workspace.', timestamp: '09:05 AM', isMe: false }
+      ]
+    };
+
+    const AUTO_BOT_RESPONSES = [
+      "Wow, that's awesome! Let's schedule a call tomorrow to detail this.",
+      "Got it. I'll review the pull request by tonight.",
+      "Excellent. I am working on the presentation deck now.",
+      "Sounds good! Let me know when you need feedback.",
+      "Hey, I am online. Let me check the documentation page."
+    ];
+
+    // Main App Container
+    function App() {
+      const [screen, setScreen] = useState('login'); // 'login', 'register', 'dashboard', 'chat', 'settings'
+      const [darkMode, setDarkMode] = useState(true);
+      const [user, setUser] = useState(null);
+      const [teams, setTeams] = useState(INITIAL_TEAMS);
+      const [currentTeamId, setCurrentTeamId] = useState(null);
+      const [messages, setMessages] = useState(INITIAL_MESSAGES);
+      const [messageText, setMessageText] = useState('');
+      const [isTyping, setIsTyping] = useState(false);
+      const [activeTab, setActiveTab] = useState('all'); // 'all', 'mine'
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Create Team Modal State
+      const [showCreateModal, setShowCreateModal] = useState(false);
+      const [newTeamName, setNewTeamName] = useState('');
+      const [newTeamDesc, setNewTeamDesc] = useState('');
+
+      const messagesEndRef = useRef(null);
+
+      // Handle Dark Mode CSS toggle
+      useEffect(() => {
+        const root = window.document.documentElement;
+        if (darkMode) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }, [darkMode]);
+
+      // Scroll to bottom of chat
+      useEffect(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, [messages, currentTeamId, isTyping]);
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        const email = e.target.email.value;
+        const name = email.split('@')[0];
+        const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+        
+        setUser({
+          username: formattedName,
+          email: email,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
+        });
+        setScreen('dashboard');
+      };
+
+      const handleRegister = (e) => {
+        e.preventDefault();
+        const username = e.target.username.value;
+        setUser({
+          username: username,
+          email: e.target.email.value,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+        });
+        setScreen('dashboard');
+      };
+
+      const handleCreateTeam = (e) => {
+        e.preventDefault();
+        if (!newTeamName.trim()) return;
+
+        const newTeam = {
+          id: String(teams.length + 1),
+          name: newTeamName,
+          description: newTeamDesc || 'No description provided.',
+          membersCount: 1
+        };
+
+        setTeams([...teams, newTeam]);
+        setMessages({
+          ...messages,
+          [newTeam.id]: [
+            { id: 'init', senderName: 'System', content: `Team "${newTeamName}" created by ${user.username}.`, timestamp: 'Just Now', isMe: false }
+          ]
+        });
+
+        // Reset fields
+        setNewTeamName('');
+        setNewTeamDesc('');
+        setShowCreateModal(false);
+      };
+
+      const handleSendMessage = (e) => {
+        e.preventDefault();
+        if (!messageText.trim()) return;
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const newMsg = {
+          id: String(Date.now()),
+          senderName: user.username,
+          content: messageText,
+          timestamp: timeString,
+          isMe: true
+        };
+
+        const currentTeamMessages = messages[currentTeamId] || [];
+        setMessages({
+          ...messages,
+          [currentTeamId]: [...currentTeamMessages, newMsg]
+        });
+        setMessageText('');
+
+        // Simulate Bot response typing
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          const responseText = AUTO_BOT_RESPONSES[Math.floor(Math.random() * AUTO_BOT_RESPONSES.length)];
+          const botMsg = {
+            id: String(Date.now() + 1),
+            senderName: ['Sarah Connor', 'John Miller', 'Alex River', 'Elena Rostova'][Math.floor(Math.random() * 4)],
+            content: responseText,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isMe: false
+          };
+          setMessages(prev => ({
+            ...prev,
+            [currentTeamId]: [...(prev[currentTeamId] || []), botMsg]
+          }));
+        }, 2000);
+      };
+
+      // Filtered teams list based on search query
+      const filteredTeams = teams.filter(t => 
+        t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        t.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      return (
+        <div class="h-full flex flex-col transition-colors duration-300">
+          
+          {/* Header Bar */}
+          <header class="bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex justify-between items-center transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-xl flex items-center justify-center text-white font-extrabold shadow-lg shadow-brand-500/20">
+                💬
+              </div>
+              <h1 class="text-xl font-extrabold bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent dark:from-brand-400 dark:to-indigo-300">
+                TeamChat
+              </h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+              {/* Dark mode switcher */}
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:ring-2 hover:ring-brand-500/30 transition-all"
+              >
+                {darkMode ? <Icons.Sun /> : <Icons.Moon />}
+              </button>
+
+              {user && (
+                <div class="flex items-center gap-3">
+                  <div 
+                    onClick={() => setScreen('settings')} 
+                    class="flex items-center gap-2 cursor-pointer group"
+                  >
+                    <img 
+                      src={user.avatar} 
+                      alt={user.username} 
+                      class="w-9 h-9 rounded-full bg-brand-100 border border-brand-200 group-hover:scale-105 transition"
+                    />
+                    <div class="hidden sm:block text-right">
+                      <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-4">{user.username}</p>
+                      <span class="text-xs text-slate-500">Active</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => { setUser(null); setScreen('login'); }}
+                    class="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition"
+                    title="Log Out"
+                  >
+                    <Icons.LogOut />
+                  </button>
+                </div>
+              )}
+            </div>
+          </header>
+
+          {/* Screen render logic */}
+          <main class="flex-1 overflow-hidden relative flex">
+            
+            {/* LOGIN SCREEN */}
+            {screen === 'login' && (
+              <div class="flex-1 flex items-center justify-center px-4 relative overflow-hidden bg-gradient-to-tr from-slate-100 to-indigo-50/50 dark:from-slate-950 dark:to-indigo-950/20">
+                {/* Glow effects */}
+                <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/5 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
+
+                <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-8 shadow-xl relative z-10 transition-all">
+                  <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Welcome Back</h2>
+                    <p class="text-sm text-slate-500 mt-2">Log in to enter your channels and teams</p>
+                  </div>
+
+                  <form onSubmit={handleLogin} class="space-y-6">
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Email Address</label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        required 
+                        placeholder="you@example.com"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Password</label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      class="w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-brand-500/25 active:scale-95 transition-all duration-150"
+                    >
+                      Login Account
+                    </button>
+                  </form>
+
+                  <div class="text-center mt-6">
+                    <p class="text-sm text-slate-500">
+                      Don't have an account?{' '}
+                      <button onClick={() => setScreen('register')} class="text-brand-500 font-semibold hover:underline bg-transparent border-0">
+                        Create Account
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* REGISTER SCREEN */}
+            {screen === 'register' && (
+              <div class="flex-1 flex items-center justify-center px-4 relative overflow-hidden bg-gradient-to-tr from-slate-100 to-indigo-50/50 dark:from-slate-950 dark:to-indigo-950/20">
+                <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/5 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
+
+                <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-8 shadow-xl relative z-10 transition-all">
+                  <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Create Account</h2>
+                    <p class="text-sm text-slate-500 mt-2">Get started chatting with your team members</p>
+                  </div>
+
+                  <form onSubmit={handleRegister} class="space-y-5">
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Username</label>
+                      <input 
+                        type="text" 
+                        name="username" 
+                        required 
+                        placeholder="alex_river"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Email Address</label>
+                      <input 
+                        type="email" 
+                        name="email" 
+                        required 
+                        placeholder="you@example.com"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Password</label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      class="w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-brand-500/25 active:scale-95 transition-all duration-150"
+                    >
+                      Sign Up
+                    </button>
+                  </form>
+
+                  <div class="text-center mt-6">
+                    <p class="text-sm text-slate-500">
+                      Already have an account?{' '}
+                      <button onClick={() => setScreen('login')} class="text-brand-500 font-semibold hover:underline bg-transparent border-0">
+                        Log In
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DASHBOARD SCREEN */}
+            {screen === 'dashboard' && (
+              <div class="flex-1 flex flex-col md:flex-row h-full">
+                
+                {/* Left Panel - Activity & Users */}
+                <div class="w-full md:w-80 border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-6 flex flex-col transition-colors">
+                  <div class="mb-6">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Online Teammates</h3>
+                    <div class="space-y-4">
+                      {[
+                        { name: 'Sarah Connor', status: 'Active now', seed: 'sarah' },
+                        { name: 'John Miller', status: 'Coding...', seed: 'john' },
+                        { name: 'Alex River', status: 'Away', seed: 'alex' }
+                      ].map((item, i) => (
+                        <div key={i} class="flex items-center gap-3">
+                          <div class="relative">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.seed}`} class="w-10 h-10 rounded-full bg-slate-100 border" />
+                            <span class={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${i < 2 ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                          </div>
+                          <div>
+                            <p class="text-sm font-semibold">{item.name}</p>
+                            <span class="text-xs text-slate-500">{item.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div class="mt-auto bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl p-4">
+                    <p class="text-xs font-semibold text-brand-600 dark:text-brand-400 mb-1">Local Testing Mode</p>
+                    <p class="text-xs text-slate-500">Connecting UI mock state. Database functions will be handled when you launch servers.</p>
+                  </div>
+                </div>
+
+                {/* Right Panel - Grid of Teams */}
+                <div class="flex-1 p-8 overflow-y-auto">
+                  <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
+                    <div>
+                      <h2 class="text-3xl font-extrabold tracking-tight">Your Team Workspaces</h2>
+                      <p class="text-slate-500 text-sm mt-1">Select a workspace to start real-time messaging</p>
+                    </div>
+
+                    <button 
+                      onClick={() => setShowCreateModal(true)}
+                      class="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-md transition"
+                    >
+                      <Icons.Plus /> Create Team
+                    </button>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div class="relative w-full max-w-md mb-8">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                      <Icons.Search />
+                    </span>
+                    <input 
+                      type="text" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for teams..."
+                      class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                    />
+                  </div>
+
+                  {/* Grid of Workspaces */}
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredTeams.map((team) => (
+                      <div 
+                        key={team.id}
+                        onClick={() => { setCurrentTeamId(team.id); setScreen('chat'); }}
+                        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-brand-500/30 cursor-pointer group transition duration-200 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 rounded-xl flex items-center justify-center font-bold">
+                              #
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-brand-500 transition">{team.name}</h3>
+                          </div>
+                          <p class="text-slate-500 text-sm mb-6 leading-relaxed line-clamp-2">{team.description}</p>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/60 pt-4 mt-auto">
+                          <span class="text-xs text-slate-500 flex items-center gap-1">
+                            <Icons.Users /> {team.membersCount} members
+                          </span>
+                          <span class="text-xs font-semibold text-brand-500 flex items-center gap-1 group-hover:translate-x-1 transition duration-200">
+                            Join Chat <Icons.ChevronRight />
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {filteredTeams.length === 0 && (
+                    <div class="text-center py-16 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl mt-4">
+                      <p class="text-slate-500">No teams found matching "{searchQuery}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CHAT SCREEN */}
+            {screen === 'chat' && currentTeamId && (
+              <div class="flex-1 flex h-full">
+                
+                {/* Chat Sidebar (Info & Members) */}
+                <div class="hidden md:flex w-72 border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex-col transition-colors">
+                  <div class="p-6 border-b border-slate-200 dark:border-slate-800/80">
+                    <button 
+                      onClick={() => setScreen('dashboard')} 
+                      class="text-brand-500 font-semibold text-sm flex items-center gap-1 hover:underline mb-4"
+                    >
+                      ← Back to Teams
+                    </button>
+                    <h3 class="text-xl font-bold tracking-tight">
+                      #{teams.find(t => t.id === currentTeamId)?.name}
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">
+                      {teams.find(t => t.id === currentTeamId)?.description}
+                    </p>
+                  </div>
+
+                  <div class="flex-1 p-6 overflow-y-auto">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Channel Members</h4>
+                    <div class="space-y-4">
+                      {[
+                        { name: 'Sarah Connor', role: 'Admin', status: 'online', seed: 'sarah' },
+                        { name: 'John Miller', role: 'Member', status: 'online', seed: 'john' },
+                        { name: 'Alex River', role: 'Member', status: 'offline', seed: 'alex' }
+                      ].map((member, idx) => (
+                        <div key={idx} class="flex items-center gap-3">
+                          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.seed}`} class="w-8 h-8 rounded-full bg-slate-100 border" />
+                          <div class="flex-1">
+                            <div class="flex justify-between items-center">
+                              <p class="text-sm font-semibold">{member.name}</p>
+                              <span class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">{member.role}</span>
+                            </div>
+                            <span class={`text-[10px] ${member.status === 'online' ? 'text-emerald-500' : 'text-slate-500'}`}>{member.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Chat Conversation Container */}
+                <div class="flex-1 flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+                  {/* Top Mobile/Header bar */}
+                  <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/80 px-6 py-4 flex justify-between items-center transition-colors">
+                    <div class="flex items-center gap-3">
+                      <button onClick={() => setScreen('dashboard')} class="md:hidden text-brand-500 mr-2">
+                        ← back
+                      </button>
+                      <div>
+                        <h3 class="font-bold">#{teams.find(t => t.id === currentTeamId)?.name}</h3>
+                        <p class="text-xs text-slate-500">Real-time simulation active</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Messages Feed */}
+                  <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    {(messages[currentTeamId] || []).map((msg) => (
+                      <div key={msg.id} class={`flex gap-3 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                        {!msg.isMe && (
+                          <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-sm font-bold text-brand-600 border border-brand-200 shrink-0">
+                            {msg.senderName[0]}
+                          </div>
+                        )}
+                        <div class="flex flex-col">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">{msg.senderName}</span>
+                            <span class="text-[10px] text-slate-400">{msg.timestamp}</span>
+                          </div>
+
+                          <div class={`px-4 py-3 rounded-2xl max-w-sm lg:max-w-md ${
+                            msg.isMe 
+                              ? 'bg-brand-600 text-white rounded-tr-none' 
+                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-tl-none shadow-sm'
+                          }`}>
+                            <p class="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Bot Typing Indicator */}
+                    {isTyping && (
+                      <div class="flex gap-3 justify-start items-center">
+                        <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-sm font-bold text-brand-600 border border-brand-200 shrink-0">
+                          🤖
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1 shadow-sm">
+                          <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
+                          <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                          <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Message Input Form */}
+                  <form onSubmit={handleSendMessage} class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/80 flex gap-3 transition-colors">
+                    <input 
+                      type="text" 
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder={`Send a message to #${teams.find(t => t.id === currentTeamId)?.name}...`}
+                      class="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition text-sm"
+                    />
+                    <button 
+                      type="submit" 
+                      class="px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-md hover:shadow-brand-500/20 active:scale-95 transition-all"
+                    >
+                      <Icons.Send />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* SETTINGS SCREEN */}
+            {screen === 'settings' && (
+              <div class="flex-1 flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
+                <div class="w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-8 shadow-lg">
+                  <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold tracking-tight">Account & App Settings</h2>
+                    <button 
+                      onClick={() => setScreen('dashboard')} 
+                      class="text-brand-500 font-semibold text-sm hover:underline"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+
+                  <div class="space-y-6">
+                    {/* User profile detail */}
+                    <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-950 p-4 border border-slate-100 dark:border-slate-800 rounded-xl">
+                      <img src={user?.avatar} class="w-16 h-16 rounded-full bg-brand-100 border border-brand-200" />
+                      <div>
+                        <h4 class="font-bold text-lg">{user?.username}</h4>
+                        <p class="text-sm text-slate-500">{user?.email}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Change Username</label>
+                      <input 
+                        type="text" 
+                        value={user?.username} 
+                        onChange={(e) => setUser({ ...user, username: e.target.value })}
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-t border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <h4 class="font-semibold text-sm">Theme Mode</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">Toggle between dark and light themes</p>
+                      </div>
+                      <button 
+                        onClick={() => setDarkMode(!darkMode)}
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm font-semibold hover:ring-2 hover:ring-brand-500/30 transition-all"
+                      >
+                        {darkMode ? 'Switch to Light' : 'Switch to Dark'}
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={() => setScreen('dashboard')} 
+                      class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-lg transition active:scale-95"
+                    >
+                      Save & Return
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CREATE TEAM MODAL */}
+            {showCreateModal && (
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4 animate-fade-in">
+                <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl">
+                  <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Create New Team</h3>
+                  
+                  <form onSubmit={handleCreateTeam} class="space-y-4">
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Team Name</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={newTeamName}
+                        onChange={(e) => setNewTeamName(e.target.value)}
+                        placeholder="e.g. Marketing, Design"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Description</label>
+                      <textarea 
+                        rows="3" 
+                        value={newTeamDesc}
+                        onChange={(e) => setNewTeamDesc(e.target.value)}
+                        placeholder="What is this channel about?"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                      />
+                    </div>
+
+                    <div class="flex gap-3 justify-end pt-2">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowCreateModal(false)}
+                        class="px-4 py-2 text-slate-500 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition"
+                      >
+                        Create Workspace
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+  </script>
+</body>
+</html>

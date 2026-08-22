@@ -5,7 +5,7 @@ class UserService {
   static async getUserById(userId) {
     try {
       const result = await query(
-        'SELECT id, username, email, avatar_url, status, created_at FROM users WHERE id = $1',
+        'SELECT id, username, display_name, email, avatar_url, status, status_message, last_seen, created_at FROM users WHERE id = $1',
         [userId]
       );
 
@@ -16,23 +16,6 @@ class UserService {
       return result.rows[0];
     } catch (error) {
       logger.error('Get user error:', error.message);
-      throw error;
-    }
-  }
-
-  static async searchUsers(searchTerm) {
-    try {
-      const result = await query(
-        `SELECT id, username, avatar_url, status
-         FROM users
-         WHERE username ILIKE $1 OR email ILIKE $1
-         LIMIT 20`,
-        [`%${searchTerm}%`]
-      );
-
-      return result.rows;
-    } catch (error) {
-      logger.error('Search users error:', error.message);
       throw error;
     }
   }
@@ -55,15 +38,18 @@ class UserService {
     }
   }
 
-  static async updateUserProfile(userId, username, avatarUrl) {
+  static async updateUserProfile(userId, username, displayName, statusMessage, avatarUrl) {
     try {
       const result = await query(
         `UPDATE users
          SET username = COALESCE($1, username),
-             avatar_url = COALESCE($2, avatar_url)
-         WHERE id = $3
-         RETURNING id, username, email, avatar_url`,
-        [username || null, avatarUrl || null, userId]
+             display_name = COALESCE($2, display_name),
+             status_message = COALESCE($3, status_message),
+             avatar_url = COALESCE($4, avatar_url),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5
+         RETURNING id, username, display_name, email, avatar_url, status_message, status`,
+        [username || null, displayName || null, statusMessage || null, avatarUrl || null, userId]
       );
 
       logger.info(`User ${userId} profile updated`);

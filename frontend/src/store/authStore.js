@@ -15,7 +15,13 @@ export const useAuthStore = create((set, get) => ({
       set({ user, token });
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.error || 'Login failed' };
+      let errMsg = 'Login failed';
+      if (error.response?.data?.error) {
+        errMsg = error.response.data.error;
+      } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors) && error.response.data.errors.length > 0) {
+        errMsg = error.response.data.errors[0].msg;
+      }
+      return { success: false, error: errMsg };
     }
   },
   
@@ -27,7 +33,13 @@ export const useAuthStore = create((set, get) => ({
       set({ user, token });
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.error || 'Registration failed' };
+      let errMsg = 'Registration failed';
+      if (error.response?.data?.error) {
+        errMsg = error.response.data.error;
+      } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors) && error.response.data.errors.length > 0) {
+        errMsg = error.response.data.errors[0].msg;
+      }
+      return { success: false, error: errMsg };
     }
   },
   

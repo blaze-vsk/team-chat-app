@@ -34,14 +34,16 @@ function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Top Header Navbar */}
-      <div className="bg-white shadow border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Account Settings</h1>
+      <div className="glass-panel border-b border-white/10 sticky top-0 z-40 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-extrabold text-white tracking-tight bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
+            Account Settings
+          </h1>
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            className="text-sm font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
           >
             &larr; Back to Dashboard
           </button>
@@ -49,77 +51,77 @@ function SettingsPage() {
       </div>
 
       {/* Main Form Container */}
-      <div className="max-w-2xl mx-auto px-4 py-8 w-full">
-        <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
-          <h2 className="text-xl font-bold mb-6 text-gray-800 pb-2 border-b">Public Profile</h2>
+      <div className="max-w-2xl mx-auto px-6 py-8 w-full relative z-10">
+        <div className="glass-panel rounded-3xl p-8 border border-white/5 shadow-2xl">
+          <h2 className="text-lg font-bold mb-6 text-white pb-3 border-b border-white/5">Public Profile</h2>
 
           {message && (
-            <div className={`p-4 mb-6 rounded-lg text-sm font-semibold ${
-              message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            <div className={`p-4 mb-6 rounded-xl text-sm font-bold ${
+              message.type === 'success' ? 'bg-green-500/15 border border-green-500/30 text-green-300' : 'bg-red-500/15 border border-red-500/30 text-red-300'
             }`}>
-              {message.text}
+              {message.type === 'success' ? '✓ ' : '⚠️ '} {message.text}
             </div>
           )}
 
           <form onSubmit={handleSave} className="space-y-6">
             <div>
-              <label className="block text-gray-700 font-semibold mb-1 text-sm">Email Address</label>
+              <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Email Address</label>
               <input
                 type="email"
                 value={user?.email || ''}
                 disabled
-                className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 text-sm cursor-not-allowed"
+                className="w-full px-4 py-3 bg-white/3 border border-white/5 rounded-xl text-gray-400 text-sm cursor-not-allowed outline-none"
               />
-              <p className="text-xs text-gray-400 mt-1">Your email address cannot be changed.</p>
+              <p className="text-[11px] text-gray-500 mt-1">Your registered email address cannot be changed.</p>
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-1 text-sm">Username</label>
+              <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Username</label>
               <input
                 type="text"
                 value={user?.username || ''}
                 disabled
-                className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 text-sm cursor-not-allowed"
+                className="w-full px-4 py-3 bg-white/3 border border-white/5 rounded-xl text-gray-400 text-sm cursor-not-allowed outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-1 text-sm">Display Name</label>
+              <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Display Name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. Alex Johnson"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-1 text-sm">Status Message</label>
+              <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Status Message</label>
               <input
                 type="text"
                 value={statusMessage}
                 onChange={(e) => setStatusMessage(e.target.value)}
                 placeholder="e.g. Working remotely today 🚀"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition shadow text-sm"
+              className="w-full gradient-btn text-white font-bold py-3 px-4 rounded-xl transition shadow-lg text-sm tracking-wide"
             >
               {loading ? 'Saving Changes...' : 'Save Profile Settings'}
             </button>
           </form>
 
-          <hr className="my-8" />
+          <hr className="my-8 border-white/5" />
 
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Account Session</h2>
+          <h2 className="text-lg font-bold mb-4 text-white">Account Session</h2>
           <button
             onClick={handleLogout}
-            className="w-full bg-red-500 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-red-600 transition text-sm shadow"
+            className="w-full bg-red-500/15 border border-red-500/30 text-red-200 font-bold py-3 px-4 rounded-xl hover:bg-red-500/25 transition text-sm shadow"
           >
             Logout Account
           </button>

@@ -48,75 +48,75 @@ export default function TeamSettingsModal({ team, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass-panel rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/10 shadow-2xl">
         {/* Header */}
-        <div className="p-4 bg-gray-800 text-white flex justify-between items-center">
-          <h3 className="font-bold text-lg">Team Settings: {team.name}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white font-bold text-xl">
+        <div className="p-5 bg-white/3 border-b border-white/5 flex justify-between items-center">
+          <h3 className="font-extrabold text-white text-base tracking-tight">Team Settings: {team.name}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-2xl font-light">
             &times;
           </button>
         </div>
 
         {/* Tab Header */}
-        <div className="flex border-b bg-gray-100 px-4">
+        <div className="flex border-b border-white/5 bg-[#0f1422] px-4 overflow-x-auto">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`py-3 px-4 font-semibold text-sm border-b-2 ${
-              activeTab === 'settings' ? 'border-blue-500 text-blue-600 bg-white' : 'text-gray-600 hover:text-gray-900'
+            className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'settings' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
-            General Settings
+            General
           </button>
           <button
             onClick={() => setActiveTab('channels')}
-            className={`py-3 px-4 font-semibold text-sm border-b-2 ${
-              activeTab === 'channels' ? 'border-blue-500 text-blue-600 bg-white' : 'text-gray-600 hover:text-gray-900'
+            className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'channels' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
             Channels ({channels.length})
           </button>
           <button
             onClick={() => setActiveTab('members')}
-            className={`py-3 px-4 font-semibold text-sm border-b-2 ${
-              activeTab === 'members' ? 'border-blue-500 text-blue-600 bg-white' : 'text-gray-600 hover:text-gray-900'
+            className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'members' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
             Members ({team.members?.length || 0})
           </button>
           <button
             onClick={() => setActiveTab('invite')}
-            className={`py-3 px-4 font-semibold text-sm border-b-2 ${
-              activeTab === 'invite' ? 'border-blue-500 text-blue-600 bg-white' : 'text-gray-600 hover:text-gray-900'
+            className={`py-3.5 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all ${
+              activeTab === 'invite' ? 'border-indigo-500 text-white' : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
-            Invite Friends
+            Invite
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1 bg-[#0b0f19]/30">
           {/* 1. General Settings */}
           {activeTab === 'settings' && (
-            <form onSubmit={handleSaveSettings} className="space-y-4">
+            <form onSubmit={handleSaveSettings} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Team Name</label>
+                <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Team Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <label className="block text-gray-300 font-semibold mb-2 text-xs uppercase tracking-wider">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows="3"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
                 />
               </div>
 
@@ -126,9 +126,9 @@ export default function TeamSettingsModal({ team, onClose }) {
                   id="isPrivate"
                   checked={isPrivate}
                   onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-indigo-600 rounded bg-white/5 border-white/10"
                 />
-                <label htmlFor="isPrivate" className="text-sm font-medium text-gray-800">
+                <label htmlFor="isPrivate" className="text-sm font-semibold text-gray-300">
                   Private Team (Requires owner approval to join)
                 </label>
               </div>
@@ -136,7 +136,7 @@ export default function TeamSettingsModal({ team, onClose }) {
               <div className="pt-4">
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
+                  className="gradient-btn text-white px-6 py-2.5 rounded-xl font-bold text-sm"
                 >
                   Save Changes
                 </button>
@@ -153,29 +153,29 @@ export default function TeamSettingsModal({ team, onClose }) {
                   value={newChannelName}
                   onChange={(e) => setNewChannelName(e.target.value)}
                   placeholder="e.g. project-discussion"
-                  className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-4 py-2.5 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm"
+                  className="px-5 py-2.5 gradient-btn text-white rounded-xl font-bold text-sm"
                 >
                   + Add Channel
                 </button>
               </form>
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {channels.map((ch) => (
-                  <div key={ch.id} className="flex justify-between items-center p-3 border rounded-lg bg-gray-50">
+                  <div key={ch.id} className="flex justify-between items-center p-4 rounded-2xl glass-panel-light border border-white/5">
                     <div>
-                      <span className="font-semibold text-gray-800">#{ch.name}</span>
-                      {ch.description && <p className="text-xs text-gray-500">{ch.description}</p>}
+                      <span className="font-bold text-white text-sm">#{ch.name}</span>
+                      {ch.description && <p className="text-xs text-gray-400 mt-0.5">{ch.description}</p>}
                     </div>
 
                     {ch.name !== 'general' && (
                       <button
                         onClick={() => deleteChannel(team.id, ch.id)}
-                        className="text-xs text-red-500 hover:text-red-700"
+                        className="text-xs font-bold text-red-400 hover:text-red-300 hover:underline"
                       >
                         Delete
                       </button>
@@ -188,30 +188,30 @@ export default function TeamSettingsModal({ team, onClose }) {
 
           {/* 3. Members */}
           {activeTab === 'members' && (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {team.members?.map((m) => (
-                <div key={m.id} className="flex justify-between items-center p-3 border rounded-lg bg-gray-50">
+                <div key={m.id} className="flex justify-between items-center p-4 rounded-2xl glass-panel-light border border-white/5">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-9 h-9 gradient-btn text-white rounded-full flex items-center justify-center font-bold text-sm">
                       {m.username[0].toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">
+                      <h4 className="font-bold text-white text-sm flex items-center gap-2">
                         {m.username}
                         {m.role === 'owner' && (
-                          <span className="ml-2 text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">
+                          <span className="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold px-2 py-0.5 rounded-md">
                             Owner
                           </span>
                         )}
                       </h4>
-                      <p className="text-xs text-gray-500">{m.email}</p>
+                      <p className="text-xs text-gray-400">{m.email}</p>
                     </div>
                   </div>
 
                   {m.role !== 'owner' && (
                     <button
                       onClick={() => handleKickMember(m.id)}
-                      className="px-3 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200"
+                      className="px-3.5 py-1.5 text-xs bg-red-500/15 border border-red-500/30 text-red-200 rounded-xl font-bold hover:bg-red-500/25 transition"
                     >
                       Kick Member
                     </button>
@@ -225,26 +225,26 @@ export default function TeamSettingsModal({ team, onClose }) {
           {activeTab === 'invite' && (
             <div>
               {friendsToInvite.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">
+                <div className="text-center py-12 text-gray-400 text-sm">
                   All your friends are already in this team, or you haven't added any friends yet.
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {friendsToInvite.map((f) => (
-                    <div key={f.id} className="flex justify-between items-center p-3 border rounded-lg bg-gray-50">
+                    <div key={f.id} className="flex justify-between items-center p-4 rounded-2xl glass-panel-light border border-white/5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        <div className="w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                           {f.username[0].toUpperCase()}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-800 text-sm">{f.username}</h4>
-                          <p className="text-xs text-gray-500">{f.email}</p>
+                          <h4 className="font-bold text-white text-sm">{f.username}</h4>
+                          <p className="text-xs text-gray-400">{f.email}</p>
                         </div>
                       </div>
 
                       <button
                         onClick={() => handleInviteFriend(f.id)}
-                        className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                        className="px-3.5 py-1.5 text-xs gradient-btn text-white rounded-xl font-bold"
                       >
                         Send Invite
                       </button>

@@ -26,40 +26,50 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Team Chat App</h1>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/25 rounded-full filter blur-3xl -z-10 animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full filter blur-3xl -z-10 animate-pulse" style={{ animationDelay: '2s' }}></div>
+
+      <div className="glass-panel rounded-3xl p-8 w-full max-w-md border border-white/10 shadow-2xl relative">
+        <div className="absolute -top-10 -left-10 w-24 h-24 bg-pink-500/10 rounded-full blur-xl"></div>
+        <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-blue-500/10 rounded-full blur-xl"></div>
+
+        <h1 className="text-3xl font-extrabold text-center mb-2 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
+          Team Chat App
+        </h1>
+        <p className="text-center text-gray-400 text-sm mb-8 font-medium">Welcome back! Log in to join the conversation.</p>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+          <div className="bg-red-500/15 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl mb-6 text-sm font-medium animate-bounce">
+            ⚠️ {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Email
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
+              className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+              placeholder="yourname@domain.com"
               required
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+          <div>
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 rounded-xl glass-input text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
               placeholder="••••••••"
               required
             />
@@ -68,16 +78,16 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition"
+            className="w-full gradient-btn text-white font-bold py-3 px-4 rounded-xl transition-all disabled:opacity-50 text-sm tracking-wide mt-2"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in...' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-4">
+        <p className="text-center text-gray-400 mt-6 text-sm">
           Don't have an account? 
-          <Link to="/register" className="text-blue-500 hover:underline ml-1">
-            Sign up
+          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold ml-1.5 transition-colors">
+            Create account
           </Link>
         </p>
       </div>

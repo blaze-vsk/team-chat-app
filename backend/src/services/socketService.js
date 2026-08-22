@@ -3,16 +3,51 @@ const MessageService = require('./messageService');
 const ConversationService = require('./conversationService');
 const UserService = require('./userService');
 const NotificationService = require('./notificationService');
+const { query } = require('../config/database');
+const jwt = require('jsonwebtoken');
 
 // Map of userId -> Set of socketIds (handling multiple tabs/devices)
 const userSockets = new Map();
 
+// Helper to format reactions into { emoji: [userIds] }
+async function getReactionsDict(messageId) {
+  try {
+    const res = await query(
+      'SELECT reaction, user_id FROM message_reactions WHERE message_id = $1',
+      [messageId]
+    );
+    const dict = {};
+    res.rows.forEach((row) => {
+      if (!dict[row.reaction]) {
+        dict[row.reaction] = [];
+      }
+      dict[row.reaction].push(row.user_id);
+    });
+    return dict;
+  } catch (err) {
+    logger.error('Failed to get reactions dict:', err.message);
+    return {};
+  }
+}
+
 class SocketService {
   static setupSocketHandlers(io) {
     io.on('connection', async (socket) => {
-      const userId = socket.handshake.auth.userId;
+      let userId = socket.handshake.auth.userId;
+      const token = socket.handshake.auth.token;
+
+      // Secure JWT token decoding
+      if (!userId && token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwtkey123');
+          userId = decoded.id;
+        } catch (err) {
+          logger.error('Socket JWT verification failed:', err.message);
+        }
+      }
+
       if (!userId) {
-        logger.warn('Socket connection request without userId');
+        logger.warn('Socket connection request without authenticated userId');
         return;
       }
 
@@ -43,18 +78,27 @@ class SocketService {
         logger.info(`User ${userId} left channel ${channelId}`);
       });
 
-      socket.on('send_channel_message', async ({ teamId, channelId, content, type = 'text', fileData = null, replyToId = null }) => {
+      socket.on('send_channel_message', async ({ teamId, channelId, content, fileData = null, replyToId = null }) => {
         try {
-          const message = await MessageService.saveMessage(teamId, channelId, userId, content, type, fileData, replyToId);
+          const message = await MessageService.saveMessage(teamId, channelId, userId, content, 'text', fileData, replyToId);
           
-          io.to(`channel:${channelId}`).emit('message_received', {
-            ...message,
-            channelId
-          });
+          const payload = {
+            id: message.id,
+            channel_id: channelId,
+            sender_id: userId,
+            username: message.sender.username,
+            content: message.content,
+            created_at: message.created_at,
+            reactions: {},
+            file_data: fileData ? {
+              fileName: fileData.fileName,
+              fileSize: fileData.fileSize,
+              fileUrl: fileData.fileUrl,
+              mimeType: fileData.mimeType || fileData.fileType
+            } : null
+          };
 
-          // Send realtime notifications to all other members of the team who are online but not in the channel
-          // To keep it simple, we can emit a global notification check to users' personal socket connections
-          // In a real app we'd filter team members. Here we can send a targeted event.
+          io.to(`channel:${channelId}`).emit('new_message', payload);
           logger.info(`Message sent to channel ${channelId}`);
         } catch (error) {
           logger.error('Send channel message error:', error.message);
@@ -63,6 +107,11 @@ class SocketService {
       });
 
       // --- Direct Message (DM) Handling ---
+      socket.on('join_dm', ({ conversationId }) => {
+        socket.join(`conversation:${conversationId}`);
+        logger.info(`User ${userId} joined DM conversation ${conversationId}`);
+      });
+
       socket.on('join_conversation', ({ conversationId }) => {
         socket.join(`conversation:${conversationId}`);
         logger.info(`User ${userId} joined DM conversation ${conversationId}`);
@@ -73,28 +122,47 @@ class SocketService {
         logger.info(`User ${userId} left DM conversation ${conversationId}`);
       });
 
-      socket.on('send_dm', async ({ conversationId, recipientId, content, type = 'text', fileData = null, replyToId = null }) => {
+      socket.on('send_dm_message', async ({ conversationId, content, fileData = null }) => {
         try {
-          const message = await ConversationService.saveMessage(conversationId, userId, content, type, fileData);
+          const message = await ConversationService.saveMessage(conversationId, userId, content, 'text', fileData);
 
-          io.to(`conversation:${conversationId}`).emit('dm_received', {
-            ...message,
-            conversationId
-          });
+          const payload = {
+            id: message.id,
+            conversation_id: conversationId,
+            sender_id: userId,
+            username: message.sender.username,
+            content: message.content,
+            created_at: message.created_at,
+            reactions: {},
+            file_data: fileData ? {
+              fileName: fileData.fileName,
+              fileSize: fileData.fileSize,
+              fileUrl: fileData.fileUrl,
+              mimeType: fileData.mimeType || fileData.fileType
+            } : null
+          };
 
-          // Create notification for recipient in DB
-          await NotificationService.createNotification(recipientId, userId, null, 'dm', `sent you a message`);
+          io.to(`conversation:${conversationId}`).emit('new_message', payload);
 
-          // Send realtime alert to recipient's individual sockets if they have active sessions
-          const recipientSockets = userSockets.get(recipientId);
-          if (recipientSockets) {
-            recipientSockets.forEach((sid) => {
-              io.to(sid).emit('notification_received', {
-                type: 'dm',
-                sender: userId,
-                content: `sent you a message`
+          // Find recipient and send notification
+          const membersRes = await query(
+            'SELECT user_id FROM conversation_members WHERE conversation_id = $1 AND user_id != $2',
+            [conversationId, userId]
+          );
+          if (membersRes.rows.length > 0) {
+            const recipientId = membersRes.rows[0].user_id;
+            await NotificationService.createNotification(recipientId, userId, null, 'dm', `sent you a message`);
+            
+            const recipientSockets = userSockets.get(recipientId);
+            if (recipientSockets) {
+              recipientSockets.forEach((sid) => {
+                io.to(sid).emit('notification_received', {
+                  type: 'dm',
+                  sender: userId,
+                  content: `sent you a message`
+                });
               });
-            });
+            }
           }
 
           logger.info(`DM sent in conversation ${conversationId}`);
@@ -105,19 +173,21 @@ class SocketService {
       });
 
       // --- Typing Indicators ---
-      socket.on('typing', ({ channelId, conversationId }) => {
-        if (channelId) {
-          socket.to(`channel:${channelId}`).emit('user_typing', { userId, channelId });
-        } else if (conversationId) {
-          socket.to(`conversation:${conversationId}`).emit('user_typing', { userId, conversationId });
-        }
-      });
-
-      socket.on('stop_typing', ({ channelId, conversationId }) => {
-        if (channelId) {
-          socket.to(`channel:${channelId}`).emit('user_stopped_typing', { userId, channelId });
-        } else if (conversationId) {
-          socket.to(`conversation:${conversationId}`).emit('user_stopped_typing', { userId, conversationId });
+      socket.on('typing', async ({ roomType, targetId, isTyping }) => {
+        try {
+          const userRes = await query('SELECT username FROM users WHERE id = $1', [userId]);
+          if (userRes.rows.length > 0) {
+            const username = userRes.rows[0].username;
+            const roomName = roomType === 'channel' ? `channel:${targetId}` : `conversation:${targetId}`;
+            socket.to(roomName).emit('user_typing', {
+              username,
+              roomType,
+              targetId,
+              isTyping
+            });
+          }
+        } catch (err) {
+          logger.error('Typing indicator error:', err.message);
         }
       });
 
@@ -125,8 +195,9 @@ class SocketService {
       socket.on('add_reaction', async ({ messageId, channelId, conversationId, reaction }) => {
         try {
           await MessageService.addReaction(messageId, userId, reaction);
+          const reactions = await getReactionsDict(messageId);
+          const payload = { messageId, reactions };
           
-          const payload = { messageId, userId, reaction, action: 'add' };
           if (channelId) {
             io.to(`channel:${channelId}`).emit('reaction_updated', payload);
           } else if (conversationId) {
@@ -140,8 +211,9 @@ class SocketService {
       socket.on('remove_reaction', async ({ messageId, channelId, conversationId, reaction }) => {
         try {
           await MessageService.removeReaction(messageId, userId, reaction);
+          const reactions = await getReactionsDict(messageId);
+          const payload = { messageId, reactions };
           
-          const payload = { messageId, userId, reaction, action: 'remove' };
           if (channelId) {
             io.to(`channel:${channelId}`).emit('reaction_updated', payload);
           } else if (conversationId) {
@@ -169,10 +241,6 @@ class SocketService {
           }
         }
         logger.info(`Socket ${socket.id} disconnected`);
-      });
-
-      socket.on('error', (error) => {
-        logger.error(`Socket error for user ${userId}:`, error.message);
       });
     });
   }

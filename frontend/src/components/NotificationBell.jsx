@@ -5,7 +5,7 @@ import { useTeamStore } from '../store/teamStore';
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
+  const { notifications, unreadCount, fetchNotifications, markAllAsRead } = useNotificationStore();
   const { respondToFriendRequest } = useFriendStore();
   const { respondToInvitation, respondToJoinRequest } = useTeamStore();
 
@@ -47,13 +47,14 @@ export default function NotificationBell() {
             <h3 className="font-semibold text-gray-700 text-sm">Notifications</h3>
             {notifications.length > 0 && (
               <button
-                onClick={() => markAsRead()}
+                onClick={() => markAllAsRead()}
                 className="text-xs text-blue-500 hover:underline"
               >
                 Mark all read
               </button>
             )}
           </div>
+
 
           <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
             {notifications.length === 0 ? (

@@ -132,5 +132,28 @@ export const useFriendStore = create((set, get) => ({
       console.error('Remove friend error:', error.message);
       return { success: false, error: error.response?.data?.error || 'Failed to remove friend' };
     }
+  },
+
+  respondToFriendRequest: async (requestId, status) => {
+    if (status === 'accepted') {
+      return get().acceptRequest(requestId);
+    } else {
+      return get().rejectRequest(requestId);
+    }
+  },
+
+  startConversation: async (friendId) => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const response = await axios.post(`${API_URL}/conversations`, { recipientId: friendId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return { id: response.data.conversationId };
+    } catch (error) {
+      console.error('Start conversation error:', error.message);
+      return null;
+    }
   }
 }));
+
